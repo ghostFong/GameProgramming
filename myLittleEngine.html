@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+	#info {
+		position: absolute;
+		top: 10px; width: 100%;
+		
+		padding: 5px;
+		text-align: center;
+		font-size: 20px;
+		color: #800000
+	} 
+	body {
+		overflow: hidden
+  }
+</style>
+</head>
+
+<body>
+<div id='info'> My Little Engine <br> 
+stop時會漸進停止<br>
+<button id="toggle" style="width:20%">Toggle Turn</button>
+</div>
+<script src="https://threejs.org/build/three.min.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+<script>
+
+var clock;
+var renderer, scene, camera;
+var train;
+var railcar;
+var trackMid;
+var angle = 0; // initialization IMPORTANT!
+var angleI;
+var ag = 0;
+var turn = false;
+var Radius = 16;
+// make angle & turn 'static'
+
+init();
+animate();
+
+$("#toggle").click(function() {
+  turn = !turn;
+  // change button name
+  if (turn) // ... is turning 
+    $("#toggle").text('stop');
+  else
+    $("#toggle").text('turn');
+});
+
+//造火車
+function makeTrain() {
+  var train = new THREE.Group();
+  var dt = clock.getDelta();
+  
+  angle += Math.PI / 15 * dt;
+  
+  var cubeGeometry = new THREE.BoxGeometry(3, 1, 2);
+  var cubeMaterial = new THREE.MeshNormalMaterial();
+  cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+  
+  //煙囪
+  chimeny = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 2, 20),
+  
+  new THREE.MeshNormalMaterial()); 
+  
+  //harness 環扣
+  harness = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.5, 20),
+  new THREE.MeshNormalMaterial()); 
+  
+  train.add(cube, chimeny, harness);
+  
+  //調整火車頭位置
+  cube.position.y = 0.5;
+  
+  //調整煙囪位置
+  chimeny.position.x = -1;
+  chimeny.position.y = 1;
+  
+  //調整環扣位置
+  harness.position.x = 1.7;
+  harness.position.y = 0.5;
+
+  return train;
+}
+
+//造火車廂
+function makeRailcar() {
+  var railcar = new THREE.Group();
+  var cubeGeometry = new THREE.BoxGeometry(3, 1, 2);
+  var cubeMaterial = new THREE.MeshNormalMaterial();
+  cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+		
+  railcar.add(cube);
+	
+	cube.position.x = 3.5;
+	cube.position.y = 0.5;
+	cube.position.z = 0.4;
+	cube.rotation.y = (Radius) * -Math.sin(Math.PI / 15);
+  return railcar;
+}
+
+
+
+//造軌道
+function makeTrack() {
+  var points = [];
+  var theta = 0,
+    theta2 = 0;
+	
+  for (var i = 0; i < 100; i++) {
+    theta = i * Math.PI * 2 / 100;
+    
+    theta2 = (i + 2) * Math.PI * 2 / 100;
+    var point = new THREE.Vector3((Radius - 1) * Math.cos(theta), 0, (Radius - 1) * Math.sin(theta));
+    var point2 = new THREE.Vector3((Radius + 1) * Math.cos(theta), 0, (Radius + 1) * Math.sin(theta));
+    var point3 = new THREE.Vector3((Radius + 1) * Math.cos(theta2), 0, (Radius + 1) * Math.sin(theta2));
+    var point4 = new THREE.Vector3((Radius - 1) * Math.cos(theta2), 0, (Radius - 1) * Math.sin(theta2));
+
+    points.push(point);
+    points.push(point2);
+    points.push(point3);
+    points.push(point4);
+  }
+
+  var geom = new THREE.BufferGeometry().setFromPoints(points);
+
+  var line = new THREE.Line(geom, new THREE.LineBasicMaterial({
+    color: 0X800000
+  }));
+
+  return line;
+}
+
+
+//左右X,Z前後,y上下
+//造軌道中
+//-------------------------------------------------------------------------------------
+function makeTrackMid() {
+  var points = [];
+  //0.0160
+  //0.027
+  //0.0001
+  var dt = clock.getDelta();
+  var dtt = 0.0160;
+  var theta = 0,
+    theta2 = 0;
+  
+  var trackMid = new THREE.Group();
+  for (var i = 0; i < 100; i++) {
+		
+    ag += 18.75*(Math.PI / 15 * dtt);
+    var cubeGeometry = new THREE.BoxGeometry(2, 0, 0.2);
+	var cubeMaterial = new THREE.MeshBasicMaterial({color:0xD2691E});
+    rail = new THREE.Mesh(cubeGeometry, cubeMaterial);
+
+    rail.position.x = Radius * Math.cos(ag);
+    rail.position.y = 0;
+    rail.position.z = Radius * -Math.sin(ag);
+
+    rail.rotation.y = ag + i * Math.PI;
+
+    trackMid.add(rail);
+
+  }
+  return trackMid;
+}
+
+//停止時的阻力
+function stopSpeed(angleI) {
+  var retard = -0.00001;
+  if (angleI > 0) {
+    angleI = angleI + retard;
+    return angleI;
+  } else {
+    return 0;
+  }
+}
+
+
+function init() {
+  //time
+  clock = new THREE.Clock();
+  var dt = clock.getDelta();
+  angleI = Math.PI / 15 * dt;
+
+  renderer = new THREE.WebGLRenderer();
+  document.body.appendChild(renderer.domElement);
+  var width = window.innerWidth;
+  var height = window.innerHeight;
+  renderer.setSize(width, height);
+
+  renderer.setClearColor(0xF8F8FF);
+
+  scene = new THREE.Scene();
+	//畫地板
+  var grid = new THREE.GridHelper(40, 40, 0xaaaa00, 0x00000F);
+  scene.add(grid);
+  var axes = new THREE.AxesHelper(5);
+  scene.add(axes);
+
+  camera = new THREE.PerspectiveCamera(35, width / height, 1, 100);
+  camera.position.y = 16;
+  camera.position.z = 40;
+  camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+  let controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+  window.addEventListener('resize', onWindowResize, false);
+  ///////////////////////////////////////////////////////////////
+
+  train = makeTrain();
+  //加入火車到場景
+  scene.add(train);
+	//加火車廂到場景
+	railcar = makeRailcar();
+	scene.add(railcar);
+  //加入鐵軌到場景
+  scene.add(makeTrack());
+  trackMid = makeTrackMid();
+  scene.add(trackMid);
+	
+
+
+}
+
+function onWindowResize() {
+
+  var width = window.innerWidth;
+  var height = window.innerHeight;
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+  renderer.setSize(width, height);
+
+}
+
+function animate() {
+
+  var dt = clock.getDelta();
+  const controls = stopSpeed(angleI);
+  if (turn) {
+    angle += Math.PI / 15 * dt;
+    angleI = Math.PI / 15 * dt;
+  } else {
+    angle += stopSpeed(angleI);
+    angleI = stopSpeed(angleI);
+    console.log(angleI)
+  }
+	
+  train.position.set(Radius * Math.cos(angle), 0, -Radius * Math.sin(angle));
+  train.rotation.y = angle + 1.5 * Math.PI;
+  
+  railcar.position.set(Radius * Math.cos(angle), 0, -Radius * Math.sin(angle));
+  railcar.rotation.y = angle +1.5 * Math.PI;
+	
+  requestAnimationFrame(animate);
+  render();
+
+}
+
+function render() {
+
+  renderer.render(scene, camera);
+
+}
+
+
+</script>
+</body>
+
+</html>
