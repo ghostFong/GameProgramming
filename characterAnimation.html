@@ -19,8 +19,11 @@ body {
 </head>
 
 <body>
-<div id="info">Character Animation Ver1
+<div id="info">Character Animation <br>
+<button id='switch'>using THIRD
+</button>
 </div>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 
 
 <!--<script>-->
@@ -31,8 +34,9 @@ import {
 } from 'https://cdn.skypack.dev/three@0.136/examples/jsm/controls/OrbitControls.js';
 
 var camera, scene, renderer;
+var camera3rd, use3rd = false;
 var texture;
-var theta = 0;
+var theta = 0, theta2 = 0;
 let body, head, leftLeg, rightLeg, leftArm, rightArm;
 let intKey, leftL, rightL;
 let lThigh, rThigh, keys, pose1, pose2;
@@ -72,6 +76,13 @@ function keyframe(t) {
   return intKey;
 }
 ////////////////////////////////////////////////////////////////////
+$('#switch').click ( function () {
+	use3rd= !use3rd;
+  if (use3rd) $('#switch').text ('using THIRD')
+  else $('#switch').text ('using ORBIT')
+})
+
+////////////////////////////////////////////////////////////////////
 
 init();
 animate();
@@ -86,10 +97,14 @@ function init() {
   document.body.appendChild(renderer.domElement);
 
   camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
-  camera.position.z = 500;
+  //camera.position.z = 500;
+	camera.position.set(0, 200, 200);
+	
+	camera3rd = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 1, 1000);
+	
   let controls = new OrbitControls(camera, renderer.domElement);
 
-  var gridXZ = new THREE.GridHelper(200, 20, 'red', 'white');
+  var gridXZ = new THREE.GridHelper(300, 20, 'red', 'white');
   scene.add(gridXZ);
 
   ////////////////////////////////////////////////////////
@@ -107,7 +122,6 @@ function init() {
   body.add(head);
   //head.position.y = 15.75; // (12.4/2) + 9.55
   scene.add(body);
-
   leftLeg = buildLeftLeg2(width, height, width);
   body.add(leftLeg);
 
@@ -850,22 +864,47 @@ function animate() {
   let dt = clock.getDelta();
   let R = 50;
   let omega = 12 / R / T;
+	let omega2 = 12 / (R/2) / T;
   theta += omega * dt;
-  body.position.set(R * Math.cos(theta), 28.65, -R * Math.sin(theta));
-
-  body.rotation.y = Math.PI + theta;
-
-  intKey = keyframe(clock.getElapsedTime());
+	theta2 += -omega2 * dt;
+  
+	//body.position.set(-R * Math.cos(theta), 28.65, R * Math.sin(theta));
+	body.position.set((R * Math.cos(theta))-R, 28.65, -R * Math.sin(theta));
+	console.log('pos = ' + body.position.x);
+	//-25~25
+	//body.position.set((-(R/2) * Math.cos(theta2)) +R, 28.65, (R/2) * Math.sin(theta2));
+  body.rotation.y =Math.PI + theta;
+	//-25~25
+	//body.rotation.y = (Math.PI + theta2);
+	/*
+	if(body.position.x > 49.99927496341000){
+	R = 25;
+	body.position.set(R * Math.sin(theta), 28.65, -R * Math.cos(theta));
+  body.rotation.y =Math.PI/2 - theta;
+	}
+  */
+	intKey = keyframe(clock.getElapsedTime());
   leftLeg.rotation.x = intKey[0];
   rightLeg.rotation.x = intKey[1];
 	leftArm.rotation.x = intKey[1];
 	rightArm.rotation.x = intKey[0];
+	
+	var thirdPos = body.localToWorld (new THREE.Vector3(0,25,-R/2));
+	var thirdAt = body.localToWorld (new THREE.Vector3(5,0,0));
+  camera3rd.position.copy (thirdPos);
+  camera3rd.lookAt (thirdAt);
+	
+	if (use3rd)
+		renderer.render (scene, camera3rd);
+  else
+		renderer.render (scene, camera);
 }
 
 function render() {
   renderer.render(scene, camera);
   //body.geometry.attributes.position.needsUpdate = true;
 }
+
 
 
 </script>
