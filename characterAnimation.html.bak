@@ -23,8 +23,8 @@ body {
 </div>
 
 
-<script>
-
+<!--<script>-->
+<script type="module">
 import * as THREE from 'https://cdn.skypack.dev/three@0.136';
 import {
   OrbitControls
