@@ -42,7 +42,7 @@ let intKey, leftL, rightL;
 let lThigh, rThigh, keys, pose1, pose2;
 let height = 19.1,
   width = 6.2;
-let T = 1;
+let T = 1, cycleOneCount = 0, cycleTwoCount = 0;
 let clock = new THREE.Clock();
 let ts = clock.getElapsedTime();
 //////////////////////////////////////////////////
@@ -89,6 +89,7 @@ animate();
 
 function init() {
 
+console.log('----------------------------');
   scene = new THREE.Scene();
 
   renderer = new THREE.WebGLRenderer();
@@ -110,29 +111,32 @@ function init() {
   ////////////////////////////////////////////////////////
   var loader = new THREE.TextureLoader();
   loader.setCrossOrigin('');
-  texture = loader.load('https://i.imgur.com/IejOuMK.png');
+  texture = loader.load('https://i.imgur.com/JCiWSsE.png');
 
 
   //X,Y,Z = 寬高(前後)
   body = buildBody2(2 * width, height, width);
-  //scene.add (body);
-  //body.position.y = 28.65; //9.55 + 19.1
 
   head = buildHead2(2 * width, 2 * width, 2 * width);
   body.add(head);
-  //head.position.y = 15.75; // (12.4/2) + 9.55
+
   scene.add(body);
+	
+	leftArm = buildLeftArm2(width, height, width);
+  body.add(leftArm);
+	leftArm.position.set (width*(3/2),height/2, 0);
+	
+  rightArm = buildRightArm2(width, height, width);
+  body.add(rightArm);
+	rightArm.position.set (-width*(3/2),height/2, 0);
+	
   leftLeg = buildLeftLeg2(width, height, width);
   body.add(leftLeg);
 
   rightLeg = buildRightLeg2(width, height, width);
   body.add(rightLeg);
 
-  leftArm = buildLeftArm2(width, height, width);
-  body.add(leftArm);
-
-  rightArm = buildRightArm2(width, height, width);
-  body.add(rightArm);
+  
 
   window.addEventListener('resize', onWindowResize, false);
 }
@@ -719,7 +723,8 @@ function buildLeftArm2(WW, HH, DD) {
     side: THREE.DoubleSide
   }));
 	leftArm.add(mesh);
-	mesh.position.x = 9.3;
+	//mesh.position.x = 9.3;
+	mesh.position.y = -height/2;
   return leftArm;
 }
 
@@ -838,7 +843,8 @@ function buildRightArm2(WW, HH, DD) {
     side: THREE.DoubleSide
   }));
 	rightArm.add(mesh);
-	mesh.position.x = -9.3;
+	//mesh.position.x = -9.3;
+	mesh.position.y = -height/2;
   return rightArm;
 }
 
@@ -868,42 +874,50 @@ function animate() {
   theta += omega * dt;
 	theta2 += -omega2 * dt;
   
-	//body.position.set(-R * Math.cos(theta), 28.65, R * Math.sin(theta));
-	body.position.set((R * Math.cos(theta))-R, 28.65, -R * Math.sin(theta));
-	console.log('pos = ' + body.position.x);
-	//-25~25
-	//body.position.set((-(R/2) * Math.cos(theta2)) +R, 28.65, (R/2) * Math.sin(theta2));
-  body.rotation.y =Math.PI + theta;
-	//-25~25
-	//body.rotation.y = (Math.PI + theta2);
-	/*
-	if(body.position.x > 49.99927496341000){
-	R = 25;
-	body.position.set(R * Math.sin(theta), 28.65, -R * Math.cos(theta));
-  body.rotation.y =Math.PI/2 - theta;
+
+	if(cycleOneCount < 1505 && cycleTwoCount == 0){
+	console.log('theta = ' + theta);
+
+	if(cycleOneCount == 0 && cycleTwoCount == 0){
+	theta = 0.011136000001430512;
 	}
-  */
+	body.position.set((R * Math.cos(theta))-R, 28.65, -R * Math.sin(theta));
+	body.rotation.y =Math.PI + theta;
+	}
+	cycleOneCount++;
+
+	
+	if(cycleOneCount > 1504){
+	body.position.set((-(R/2) * Math.cos(theta2)) +(R/2), 28.65, (R/2) * Math.sin(theta2) + (10));
+	body.rotation.y = (Math.PI + theta2);
+	cycleTwoCount++;
+		if(cycleTwoCount > 840){
+		cycleOneCount = 0;
+		cycleTwoCount = 0;
+		}
+	}
 	intKey = keyframe(clock.getElapsedTime());
-  leftLeg.rotation.x = intKey[0];
-  rightLeg.rotation.x = intKey[1];
+	leftLeg.rotation.x = intKey[0];
+	rightLeg.rotation.x = intKey[1];
 	leftArm.rotation.x = intKey[1];
 	rightArm.rotation.x = intKey[0];
 	
 	var thirdPos = body.localToWorld (new THREE.Vector3(0,25,-R/2));
 	var thirdAt = body.localToWorld (new THREE.Vector3(5,0,0));
-  camera3rd.position.copy (thirdPos);
-  camera3rd.lookAt (thirdAt);
+	
+	camera3rd.position.copy (thirdPos);
+	camera3rd.lookAt (thirdAt);
 	
 	if (use3rd)
 		renderer.render (scene, camera3rd);
-  else
+		else
 		renderer.render (scene, camera);
 }
 
 function render() {
   renderer.render(scene, camera);
-  //body.geometry.attributes.position.needsUpdate = true;
 }
+
 
 
 
