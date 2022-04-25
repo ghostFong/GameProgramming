@@ -888,10 +888,10 @@ function animate() {
 
 	
 	if(cycleOneCount > 1504){
-	body.position.set((-(R/2) * Math.cos(theta2)) +(R/2), 28.65, (R/2) * Math.sin(theta2) + (5));
+	body.position.set((-(R/2) * Math.cos(theta2)) +(R/2), 28.65, (R/2) * Math.sin(theta2) + (10));
 	body.rotation.y = (Math.PI + theta2);
 	cycleTwoCount++;
-		if(cycleTwoCount > 835){
+		if(cycleTwoCount > 840){
 		cycleOneCount = 0;
 		cycleTwoCount = 0;
 		}
