@@ -878,7 +878,7 @@ function animate() {
   theta += omega * dt;
 	theta2 += -omega2 * dt;
   
-	if(cycleOneCount < 1510 && cycleTwoCount == 0){
+	if(cycleOneCount < 1505 && cycleTwoCount == 0){
 		if(cycleOneCount == 0 && cycleTwoCount == 0){
 		theta = 0.011136000001430512;
 		}
@@ -888,12 +888,12 @@ function animate() {
 	}
 	cycleOneCount++;
 	
-	if(cycleOneCount > 1509){
+	if(cycleOneCount > 1504){
 	body.position.set((-(R/2) * Math.cos(theta2)) +(R/2), 28.65, (R/2) * Math.sin(theta2));
 	body.rotation.y = (Math.PI + theta2);
 	cycleTwoCount++;
 	
-	if(cycleTwoCount > 890){
+	if(cycleTwoCount > 860){
 	cycleOneCount = 0;
 	cycleTwoCount = 0;
 	}
