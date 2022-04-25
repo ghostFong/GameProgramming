@@ -35,7 +35,7 @@ import {
 
 var camera, scene, renderer;
 var camera3rd, use3rd = false;
-var texture;
+var texture, texture2;
 var theta = 0, theta2 = 0;
 let body, head, leftLeg, rightLeg, leftArm, rightArm;
 let intKey, leftL, rightL;
@@ -59,7 +59,6 @@ keys = [
   [0.5, pose2],
   [1, pose1]
 ];
-
 
 function keyframe(t) {
   var s = ((t - ts) % T) / T;
@@ -89,7 +88,7 @@ animate();
 
 function init() {
 
-console.log('----------------------------');
+
   scene = new THREE.Scene();
 
   renderer = new THREE.WebGLRenderer();
@@ -98,15 +97,21 @@ console.log('----------------------------');
   document.body.appendChild(renderer.domElement);
 
   camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
-  //camera.position.z = 500;
-	camera.position.set(0, 200, 200);
-	
-	camera3rd = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 1, 1000);
+  camera.position.set(0, 200, 200);
+  
+  camera3rd = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 1, 1000);
 	
   let controls = new OrbitControls(camera, renderer.domElement);
 
-  var gridXZ = new THREE.GridHelper(300, 20, 'red', 'white');
-  scene.add(gridXZ);
+  //var gridXZ = new THREE.GridHelper(300, 20, 'red', 'white');
+  //scene.add(gridXZ);
+	let loaderScenes = new THREE.TextureLoader();
+	
+	texture2 = loaderScenes.load('https://i.imgur.com/U1Onvx6.png');
+	var texMat = new THREE.MeshBasicMaterial({map: texture2});
+	var floor = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), texMat);
+  scene.add(floor);
+	floor.rotation.x = Math.PI* (3/2);
 
   ////////////////////////////////////////////////////////
   var loader = new THREE.TextureLoader();
@@ -119,16 +124,16 @@ console.log('----------------------------');
 
   head = buildHead2(2 * width, 2 * width, 2 * width);
   body.add(head);
-
+  
   scene.add(body);
-	
-	leftArm = buildLeftArm2(width, height, width);
+  
+  leftArm = buildLeftArm2(width, height, width);
   body.add(leftArm);
-	leftArm.position.set (width*(3/2),height/2, 0);
+  leftArm.position.set (width*(3/2),height/2, 0);
 	
   rightArm = buildRightArm2(width, height, width);
   body.add(rightArm);
-	rightArm.position.set (-width*(3/2),height/2, 0);
+  rightArm.position.set (-width*(3/2),height/2, 0);
 	
   leftLeg = buildLeftLeg2(width, height, width);
   body.add(leftLeg);
@@ -136,7 +141,6 @@ console.log('----------------------------');
   rightLeg = buildRightLeg2(width, height, width);
   body.add(rightLeg);
 
-  
 
   window.addEventListener('resize', onWindowResize, false);
 }
@@ -874,27 +878,25 @@ function animate() {
   theta += omega * dt;
 	theta2 += -omega2 * dt;
   
-
-	if(cycleOneCount < 1505 && cycleTwoCount == 0){
-	console.log('theta = ' + theta);
-
-	if(cycleOneCount == 0 && cycleTwoCount == 0){
-	theta = 0.011136000001430512;
-	}
+	if(cycleOneCount < 1510 && cycleTwoCount == 0){
+		if(cycleOneCount == 0 && cycleTwoCount == 0){
+		theta = 0.011136000001430512;
+		}
+	
 	body.position.set((R * Math.cos(theta))-R, 28.65, -R * Math.sin(theta));
 	body.rotation.y =Math.PI + theta;
 	}
 	cycleOneCount++;
-
 	
-	if(cycleOneCount > 1504){
-	body.position.set((-(R/2) * Math.cos(theta2)) +(R/2), 28.65, (R/2) * Math.sin(theta2) + (10));
+	if(cycleOneCount > 1509){
+	body.position.set((-(R/2) * Math.cos(theta2)) +(R/2), 28.65, (R/2) * Math.sin(theta2));
 	body.rotation.y = (Math.PI + theta2);
 	cycleTwoCount++;
-		if(cycleTwoCount > 840){
-		cycleOneCount = 0;
-		cycleTwoCount = 0;
-		}
+	
+	if(cycleTwoCount > 890){
+	cycleOneCount = 0;
+	cycleTwoCount = 0;
+	}
 	}
 	intKey = keyframe(clock.getElapsedTime());
 	leftLeg.rotation.x = intKey[0];
@@ -904,19 +906,19 @@ function animate() {
 	
 	var thirdPos = body.localToWorld (new THREE.Vector3(0,25,-R/2));
 	var thirdAt = body.localToWorld (new THREE.Vector3(5,0,0));
-	
 	camera3rd.position.copy (thirdPos);
 	camera3rd.lookAt (thirdAt);
 	
 	if (use3rd)
 		renderer.render (scene, camera3rd);
-		else
+  else
 		renderer.render (scene, camera);
 }
 
 function render() {
   renderer.render(scene, camera);
 }
+
 
 
 
